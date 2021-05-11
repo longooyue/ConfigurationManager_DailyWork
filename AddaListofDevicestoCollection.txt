@@ -1,0 +1,3 @@
+$computers = Get-Content -Path "X:\dir\Devices.txt"
+foreach($computer in $computers){ Add-CMDeviceCollectionDirectMembershipRule -CollectionName "#Collection#" -ResourceID ((Get-CMDevice -Name $computer -resource).ResourceID) }
+

@@ -1,0 +1,1 @@
+Get-CMSoftwareUpdateDeployment -CollectionName #Collection# | Set-CMSoftwareUpdateDeployment -DeploymentExpireDateTime 06/10/2021 
