@@ -22,20 +22,22 @@
 
 ###解决：
 按照上面的顺序依次
-%SystemRoot%\TEMP:
+######1. %SystemRoot%\TEMP:
+
 因为就是个给软件放垃圾的地方,直接删掉理论上来说就可以
 Windows命令提示符删除文件夹的的操作是rd rd | Microsoft Docs
 参数就三个,路径 /S /Q 全都需要
 
+![dir](https://s3.bmp.ovh/imgs/2022/02/936208fbdf9aef3e.png)
+***D分区下有个test1,里面有个test2***
 
-D分区下有个test1,里面有个test2
-
-如上图,执行完后就删掉了 test2 这个文件夹
+![rd](https://s3.bmp.ovh/imgs/2022/02/0529aa4e28273922.png)
+***如上图,执行完后就删掉了 test2 这个文件夹***
 
 考虑到其他需要删除的文件可能需要本地管理员 或者 需要操作注册表（后面的操作）,因此通过PowerShell执行策略的 bypass会方便一些,之后的所有操作都会尽量使用PowerShell的语句
 看看rd在powershell里有没有同样的功能
 Get-help rd
-
+![gethelp](https://s3.bmp.ovh/imgs/2022/02/9ce64572d7072234.png)
 
 有的,在PowerShell里rd是remove-item的别名,但是用法不一样了.明显可以发现参数多了.
 Remove-Item (Microsoft.PowerShell.Management) - PowerShell | Microsoft Docs 看看用法
@@ -46,30 +48,39 @@ Remove-Item (Microsoft.PowerShell.Management) - PowerShell | Microsoft Docs 看�
 可以,没了
 
 搞定第一个
-Remove-Item -Path "%SystemRoot%\TEMP" -Recurse -Force 实际测试一下
+```
+Remove-Item -Path "%SystemRoot%\TEMP" -Recurse -Force 
+```
+实际测试一下
 
 尴尬,powershell引用环境变量的时候不能直接引用,得带上$env: 更换一下 顺便TMP这个文件夹留着,下面的文件夹都不要,改一改
+
+```
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force
+```
 
 成了,就是报错(被占用的文件)太多,我不要看到,那就再加个 -ErrorAction silentlycontinue
 
 最后再试一试
+
+```
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force -ErrorAction silentlycontinue
+```
 
 成了
 
-同理
-%SystemRoot%\ccmcache
-也可以这么操作
 
-这个不行
-%SystemRoot%\SoftwareDistribution
+######2. 同理 %SystemRoot%\ccmcache 也可以这么操作
+
+######3. 这个不行 %SystemRoot%\SoftwareDistribution
+
 因为Windows更新(wuauserv) 这个服务会一直使用这个文件夹
 得在操作删除前停止这个服务 Stop-Service -Name wuauserv -Force
 然后再启动服务 Start-Service -Name wuauserv
 停服务后面最好再加个等待5秒 防止有的客户端太老性能差
 
-$Windows.~BT
+######4. $Windows.~BT
+
 直接删除也可以的.但是在整理这个脚本过程中发现
 Windows功能更新过程中会有很多没有必要存在的文件被创建,为了解决这个问题Windows自带的磁盘清理功能是非常强大的cleanmgr | Microsoft Docs
 除了一些账号本身产生的垃圾以外,包括清理功能更新产生的文件在内,前面的一些操作完全可以被磁盘清理覆盖进去.
@@ -82,21 +93,19 @@ cleanmgr | Microsoft Docs
 /sageset:n /sagerun:n /verylowdisk
 关于制定项,用法页面里没有详细介绍,但是另外一个微软页面(Automating Disk Cleanup tool - Windows Server | Microsoft Docs)中有介绍
 
-/sageset:n - This switch displays the Disk Cleanup Settings dialog box and creates a registry key to store the settings you select. The n value is stored in the registry and allows you to specify different tasks for Disk Cleanup to run. The n value can be any integer value from 0 to 65535. To get all the available options when you use the /sageset switch, you may need to specify the drive letter that contains the Windows installation.
-For more information, see Registry key information.
+>/sageset:n - This switch displays the Disk Cleanup Settings dialog box and creates a registry key to store the settings you select. The n value is stored in the registry and allows you to specify different tasks for Disk Cleanup to run. The n value can be any integer value from 0 to 65535. To get all the available options when you use the /sageset switch, you may need to specify the drive letter that contains the Windows installation.
+>For more information, see Registry key information.
 
 再跳转到具体的注册表介绍页 Automating Disk Cleanup tool - Windows Server | Microsoft Docs
-Each of the modified registry sub keys may contain a REG_DWORD type registry value StateFlagsNNNN, where NNNN is the number n specified in the switch. For example, after you run the cleanmgr /sageset:9 command, a registry value Stateflags0009 is added.
-
-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\ 位置
+>Each of the modified registry sub keys may contain a REG_DWORD type registry value StateFlagsNNNN, where NNNN is the number n specified in the switch. For example, after you run the cleanmgr /sageset:9 command, a registry value Stateflags0009 is added.
+>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\ 位置
 StateFlagsNNNN 																		键值  
 If the option box is selected, the value is 00000002.
 
 
 到对应的注册表看一看,还是挺多的,既然都被列在cleanmgr里,那都是不会影响操作系统正常运行的文件,可删.
 
-
-
+```
 $REG = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 set-itemproperty -path "$REG\Windows Upgrade Log Files" -name StateFlags0001 -type DWORD -Value 2
 set-itemproperty -path "$REG\Windows ESD installation files" -name StateFlags0001 -type DWORD -Value 2
@@ -129,36 +138,42 @@ set-itemproperty -path "$REG\Content Indexer Cleaner" -name StateFlags0001 -type
 set-itemproperty -path "$REG\BranchCache" -name StateFlags0001 -type DWORD -Value 2
 set-itemproperty -path "$REG\Active Setup Temp Folders" -name StateFlags0001 -type DWORD -Value 2
 cleanmgr /sagerun:1 /VERYLOWDISK
-
+```
 这不行,太难看了.缩短点
 思路就是获取VolumeCaches下面所有目录,然后每个目录里新建一个键
 由于经验比较浅,本应该很容易的一件事情结果我在这个坑里爬了将近4小时.下面就只记录几个关键的瞬间
 
 第一步：
+```
 $REGS = "Windows Upgrade Log Files" ,"Windows ESD installation files" ,"Windows Error Reporting Files" ,"Windows Defender" ,"User file versions" ,"Upgrade Discarded Files" ,"Update Cleanup" ,"Thumbnail Cache" ,"Temporary Setup Files" ,"Temporary Sync Files" ,"Temporary Files" ,"System error minidump files" ,"System error memory dump files" ,"Setup Log Files" ,"RetailDemo Offline Content" ,"Recycle Bin" ,"Old ChkDsk Files" ,"Previous Installations" ,"Offline Pages Files" ,"Language Pack" ,"Internet Cache Files" ,"DownloadsFolder" ,"Downloaded Program Files" ,"Diagnostic Data Viewer database files" ,"Device Driver Packages" ,"Delivery Optimization Files" ,"D3D Shader Cache" ,"Content Indexer Cleaner" ,"BranchCache" ,"Active Setup Temp Folders"
 foreach($REG in $REGS){
   set-itemproperty -path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\$REG" -name StateFlags0002 -type DWORD -Value 2
 }
-
+```
 先确定需要什么样的变量才能成功操作
 
-第二部：
+第二步：
+
+```
 $Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 $Full = (get-childitem $Registory).Name
+```
 
 拿到对应的路径,并且转换成字符
 方便进行字符处理
 
 第三步：
+```
 $Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 $Full = (get-childitem $Registory).Name
 foreach($single in $Full){
   $dir = $single.split('\')[7]
 }
-
+```
 处理字符,拿到第一步中成功测试的所需变量
 最终就是下面这段
 
+```
 $Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 $Full = (get-childitem $Registory).Name
 foreach($single in $Full){
@@ -166,6 +181,7 @@ foreach($single in $Full){
   set-itemproperty -path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\$dir" -name StateFlags0001 -type DWORD -Value 2
 }
 cleanmgr /sagerun:1 /VERYLOWDISK
+```
 
 既然用到了cleanmgr,那对应的磁盘清理这个软件里还有一些别的删除功能吗,看一下
 
