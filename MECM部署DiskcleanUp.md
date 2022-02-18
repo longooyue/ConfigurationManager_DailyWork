@@ -25,7 +25,7 @@
 ######1. %SystemRoot%\TEMP:
 
 因为就是个给软件放垃圾的地方,直接删掉理论上来说就可以
-Windows命令提示符删除文件夹的的操作是rd rd | Microsoft Docs
+Windows命令提示符删除文件夹的的操作是 [rd][https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rd]
 参数就三个,路径 /S /Q 全都需要
 
 ![dir](https://s3.bmp.ovh/imgs/2022/02/936208fbdf9aef3e.png)
@@ -40,7 +40,7 @@ Get-help rd
 ![gethelp](https://s3.bmp.ovh/imgs/2022/02/9ce64572d7072234.png)
 
 有的,在PowerShell里rd是remove-item的别名,但是用法不一样了.明显可以发现参数多了.
-Remove-Item (Microsoft.PowerShell.Management) - PowerShell | Microsoft Docs 看看用法
+[Remove-Item][https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/remove-item?view=powershell-7.1] 看看用法
 是个路径 -path 递归一下下面所有的文件夹 -Recurse 顺便强制一下防止弹确认-Force 应该足够了
 
 还是test2 老兄,执行一下
@@ -150,7 +150,7 @@ foreach($REG in $REGS){
   set-itemproperty -path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\$REG" -name StateFlags0002 -type DWORD -Value 2
 }
 ```
-先确定需要什么样的变量才能成功操作
+先反向确定需要什么样的变量才能成功操作
 
 第二步：
 
