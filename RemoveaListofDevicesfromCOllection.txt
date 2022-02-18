@@ -1,8 +1,0 @@
-$PCs = Get-CMDeviceCollectionDirectMembershipRule -CollectionName #Collection#
-
-
-foreach ($PC in $PCs)
-    {
-                # Delete computer from Collection
-                Remove-CMDeviceCollectionDirectMembershipRule -CollectionName #Collection#  -ResourceName $PC.RuleName -force
-    }

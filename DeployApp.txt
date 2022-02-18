@@ -1,2 +1,0 @@
-New-CMApplicationDeployment -Name "@ApplicationName@" -AvailableDateTime '04/16/2021 00:00:00' -CollectionName '#Collection#' -DeadlineDateTime '05/07/2021 12:00:00' -DeployAction Install -DeployPurpose Required
-
