@@ -1,6 +1,6 @@
 #MECM部署DiskcleanUp
 
-##记录一次捣鼓MECM的过程，不是一件很麻烦的事情，但是估计所有Helpdesk都会遇到的头疼问题。
+##记录一次捣鼓MECM的过程,不是一件很麻烦的事情,但是估计所有Helpdesk都会遇到的头疼问题。
 
 ###现状：
 - 所有电脑通过软件中心安装质量更新和功能更新,部分OU的账号属于本地管理员组,另外一部分不属于.
@@ -47,9 +47,9 @@ Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https
 [Remove-Item (Microsoft.PowerShell.Management) - PowerShell | Microsoft Docs](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/remove-item?view=powershell-7.1)看看用法
 需要一个路径 **-path** 递归一下下面所有的文件夹 **-Recurse** 顺便强制一下防止弹确认**-Force** 应该足够了
 ![remove](https://s3.bmp.ovh/imgs/2022/02/83f901acad2de63b.png)
-还是test2 ,执行一下
+***还是test2 ,执行一下***
 ![remove](https://s3.bmp.ovh/imgs/2022/02/0f9a32c4627cd499.png)
-可以,没了
+***可以,没了***
 
 
 用法搞定
@@ -57,20 +57,25 @@ Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https
 Remove-Item -Path "%SystemRoot%\TEMP" -Recurse -Force 
 ```
 测试一下实际路径
+
 ![remove](https://s3.bmp.ovh/imgs/2022/02/bfda479286f974a2.png)
-尴尬,powershell引用环境变量的时候不能直接引用,得带上**$env: **更换一下，顺便TMP这个文件夹留着,下面的文件夹都不要,改一改
+***报错了,因为该路径不存在***
+
+powershell引用环境变量的时候不能直接引用,得带上$env: 更换一下,顺便TMP这个文件夹留着,下面的文件夹都不要,改一改
 
 ```
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force
 ```
 ![remove](https://s3.bmp.ovh/imgs/2022/02/31ef27b4f1ab62de.png)
-成了,就是报错(被占用的文件)太多,我不要看到,那就再加个 **-ErrorAction silentlycontinue** 最后再试一试
+***可以是可以，就是报错(被占用的文件)太多***
+
+我不要看到,那就再加个 **-ErrorAction silentlycontinue** 最后再试一试
 
 ```
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force -ErrorAction silentlycontinue
 ```
 ![remove](https://s3.bmp.ovh/imgs/2022/02/7b1183b3f95a8eba.png)
-成了
+***成了***
 
 
 ######2. 同理 %SystemRoot%\ccmcache 也可以这么操作
@@ -298,7 +303,7 @@ vssadmin delete shadows /all /quiet
 
 
 到点了,再看看C分区
-成了，至此MECM部署DiskcleanUp结束
+成了,至此MECM部署DiskcleanUp结束
 
 ----
 
