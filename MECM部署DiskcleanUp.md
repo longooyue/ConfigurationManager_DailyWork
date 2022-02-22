@@ -234,10 +234,10 @@ vssadmin delete shadows /all /quiet
 ```
 至此脚本部分就已经完成了.试一试效果
 
-![ps1](https://s3.bmp.ovh/imgs/2022/02/730d4515f6e268b9.png)
+![ps1](https://s3.bmp.ovh/imgs/2022/02/730d4515f6e268b9.png)<br>
 ***Before***
 
-![ps1](https://s3.bmp.ovh/imgs/2022/02/02bb8dcea14c21e2.png)
+![ps1](https://s3.bmp.ovh/imgs/2022/02/02bb8dcea14c21e2.png)<br>
 ***After***
 
 还是有一些没用的文件存在的。
@@ -247,19 +247,22 @@ vssadmin delete shadows /all /quiet
 
 那么接下来就进入MECM上的操作,远程桌面到主站点,打开控制台
 
-![ps1](https://s3.bmp.ovh/imgs/2022/02/f695a8c2157e6b5c.png)
+![ps1](https://s3.bmp.ovh/imgs/2022/02/f695a8c2157e6b5c.png)<br>
 ***把脚本放好位置***
 
-![deploy](https://s3.bmp.ovh/imgs/2022/02/6d234131e49f1b7c.png)
+![deploy](https://s3.bmp.ovh/imgs/2022/02/6d234131e49f1b7c.png)<br>
 ***创建部署包***
 
+![UNC](https://s3.bmp.ovh/imgs/2022/02/a6dac8bf2b71ffee.png)<br>
+***路径需要是UNC格式***
 
-路径需要是UNC格式
+![C](https://s3.bmp.ovh/imgs/2022/02/3b295035029857b2.png)<br>
+***就是个只包含一个脚本的部署包,没有程序***
 
-就是个只包含一个脚本的部署包,没有程序
-
+![done](https://s3.bmp.ovh/imgs/2022/02/09f2521dfe715b90.png)<br>
 完成后
-  把部署包Distribute一下到所有的分配点上
+把部署包
+![deploy1](https://s3.bmp.ovh/imgs/2022/02/544657659f8235aa.png)<br>  Distribute一下到所有的分配点上
 
 接下来创建任务序列
 
