@@ -2,6 +2,21 @@
 
 **记录一次捣鼓MECM的过程,不是一件很麻烦的事情,但是估计所有Helpdesk都会遇到的头疼问题.**
 
+****
+## 目录
+* [现状](#现状)
+* [问题](#问题)
+* [需求](#需求)
+* [思路](#思路)
+* [解决](#解决)
+    * 制作脚本
+    * 优化脚本
+    * 完成脚本
+    * 测试脚本
+* [结束语](#结束语)
+
+
+
 ## 现状：
    - 所有电脑通过软件中心安装质量更新和功能更新,部分OU的账号属于本地管理员组,另外一部分不属于.
    - 各公司管理员交付电脑时未充分考虑员工使用情况,采购的电脑磁盘较小,系统文件夹全都在系统分区下；365Apps（Outlook）默认文件夹也都在系统分区.
@@ -159,7 +174,7 @@ set-itemproperty -path "$REG\BranchCache" -name StateFlags0001 -type DWORD -Valu
 set-itemproperty -path "$REG\Active Setup Temp Folders" -name StateFlags0001 -type DWORD -Value 2
 cleanmgr /sagerun:1 /VERYLOWDISK
 ```
-这不行,太难看了.假如脚本要维护,肯定是希望维护的时候尽可能的少改动.
+理论上整合一下上面几块就可以使用了,但是注册表这一块太难看了.假如脚本后期要维护,肯定是不希望改这么长一串的.这一段能通过Powershell语法让它变得好看一些.
 
 ### 优化脚本
 
