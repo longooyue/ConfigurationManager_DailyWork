@@ -159,7 +159,10 @@ set-itemproperty -path "$REG\BranchCache" -name StateFlags0001 -type DWORD -Valu
 set-itemproperty -path "$REG\Active Setup Temp Folders" -name StateFlags0001 -type DWORD -Value 2
 cleanmgr /sagerun:1 /VERYLOWDISK
 ```
-这不行,太难看了.缩短点
+这不行,太难看了.假如脚本要维护,肯定是希望维护的时候尽可能的少改动.
+
+### 优化脚本
+
 思路就是获取VolumeCaches下面所有目录,然后每个目录里新建一个键
 由于经验比较浅,本应该很容易的一件事情结果我在这个坑里爬了将近4小时.下面就只记录几个关键的瞬间
 
@@ -217,6 +220,7 @@ cleanmgr /sagerun:1 /VERYLOWDISK
 一共就5个参数,全都删掉且不要交互
 **vssadmin delete shadows /all /quiet**
 
+### 完成脚本
 
 整合一下
 YaoNiMing3k.ps1
@@ -239,7 +243,10 @@ cleanmgr /sagerun:2 /VERYLOWDISK
 
 vssadmin delete shadows /all /quiet
 ```
-至此脚本部分就已经完成了.试一试效果
+至此脚本部分就已经完成了.
+
+### 测试脚本
+每一个坑都已经踩过了,脚本应该是可以正常运行的了.试一试
 
 ![ps1](https://s3.bmp.ovh/imgs/2022/02/730d4515f6e268b9.png)<br>
 ***Before 104G可用***
@@ -251,6 +258,7 @@ vssadmin delete shadows /all /quiet
 当然,直接运行这个脚本也是可以的,但是我相信我们集团员工不可能所有人都愿意/有能力去执行.况且这些语句完全没有做例外处理,万一手动执行的过程中遇到过error,员工看到个error来责怪那就百口难辨了.<br>
 既然本文是MECM部署DiskcleanUp,那么最后一步就是把脚本通过MECM部署到对应的集合.并且之所以用PowerShell的写法是因为用MECM(SCCM)去部署PowerShell非常的无脑,强力推荐!
 
+### 部署脚本
 
 那么接下来就进入MECM上的操作,远程桌面到主站点,打开控制台
 
@@ -322,6 +330,7 @@ vssadmin delete shadows /all /quiet
 成了,至此MECM部署DiskcleanUp结束
 
 ----
+## 结束语
 
 最终的目的是让电脑可以避免因员工使用习惯造成系统分区被浪费 导致无法进行功能更新
 除了部署清理以外另外一个就是从根本上杜绝员工写文件到系统分区.
