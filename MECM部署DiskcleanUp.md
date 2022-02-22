@@ -32,24 +32,28 @@
 Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rd)
 参数就三个,路径 /S /Q 全都需要
 
-![dir](https://s3.bmp.ovh/imgs/2022/02/936208fbdf9aef3e.png)
+![dir](https://s3.bmp.ovh/imgs/2022/02/936208fbdf9aef3e.png)<br>
 ***D分区下有个test1,里面有个test2***
 
-![rd](https://s3.bmp.ovh/imgs/2022/02/0529aa4e28273922.png)
+![rd](https://s3.bmp.ovh/imgs/2022/02/0529aa4e28273922.png)<br>
 ***如上图,执行完后就删掉了 test2 这个文件夹***
 
 考虑到其他需要删除的文件可能需要本地管理员 或者 需要操作注册表（后面的操作）,因此通过PowerShell执行策略的 bypass会方便一些,之后的所有操作都会尽量使用PowerShell的语句
 看看rd在powershell里有没有同样的功能
-**Get-help rd**
-![gethelp](https://s3.bmp.ovh/imgs/2022/02/9ce64572d7072234.png)
-
-有的,在PowerShell里rd是remove-item的别名,但是用法不一样了.明显可以发现参数多了.
-[Remove-Item (Microsoft.PowerShell.Management) - PowerShell | Microsoft Docs](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/remove-item?view=powershell-7.1)看看用法
-需要一个路径 **-path** 递归一下下面所有的文件夹 **-Recurse** 顺便强制一下防止弹确认**-Force** 应该足够了
-![remove](https://s3.bmp.ovh/imgs/2022/02/83f901acad2de63b.png)
-***还是test2 ,执行一下***
-![remove](https://s3.bmp.ovh/imgs/2022/02/0f9a32c4627cd499.png)
-***可以,没了***
+```
+Get-help rd
+```
+![gethelp](https://s3.bmp.ovh/imgs/2022/02/9ce64572d7072234.png)<br>
+有的,在PowerShell里rd是remove-item的别名,但是用法不一样了.明显可以发现参数多了.<br>
+看看用法[Remove-Item (Microsoft.PowerShell.Management) - PowerShell | Microsoft Docs](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/remove-item?view=powershell-7.1)<br>
+需要一个路径 -path <br>
+递归一下下面所有的文件夹 -Recurse <br>
+顺便强制一下防止弹确认 -Force <br>
+应该足够了
+![remove](https://s3.bmp.ovh/imgs/2022/02/83f901acad2de63b.png)<br>
+<br>***还是test2 ,执行一下***
+![remove](https://s3.bmp.ovh/imgs/2022/02/0f9a32c4627cd499.png)<br>
+<br>***可以,没了***
 
 
 用法搞定
@@ -58,7 +62,7 @@ Remove-Item -Path "%SystemRoot%\TEMP" -Recurse -Force
 ```
 测试一下实际路径
 
-![remove](https://s3.bmp.ovh/imgs/2022/02/bfda479286f974a2.png)
+![remove](https://s3.bmp.ovh/imgs/2022/02/bfda479286f974a2.png)<br>
 ***报错了,因为该路径不存在***
 
 powershell引用环境变量的时候不能直接引用,得带上$env: 更换一下,顺便TMP这个文件夹留着,下面的文件夹都不要,改一改
@@ -66,7 +70,7 @@ powershell引用环境变量的时候不能直接引用,得带上$env: 更换一
 ```
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force
 ```
-![remove](https://s3.bmp.ovh/imgs/2022/02/31ef27b4f1ab62de.png)
+![remove](https://s3.bmp.ovh/imgs/2022/02/31ef27b4f1ab62de.png)<br>
 ***可以是可以，就是报错(被占用的文件)太多***
 
 我不要看到,那就再加个 **-ErrorAction silentlycontinue** 最后再试一试
@@ -74,7 +78,7 @@ Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force
 ```
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force -ErrorAction silentlycontinue
 ```
-![remove](https://s3.bmp.ovh/imgs/2022/02/7b1183b3f95a8eba.png)
+![remove](https://s3.bmp.ovh/imgs/2022/02/7b1183b3f95a8eba.png)<br>
 ***成了***
 
 
@@ -106,9 +110,7 @@ Windows功能更新过程中会有很多没有必要存在的文件被创建,为
 
 再跳转到具体的注册表介绍页看看怎么指定 [Automating Disk Cleanup tool - Windows Server | Microsoft Docs](https://docs.microsoft.com/en-us/troubleshoot/windows-server/backup-and-storage/automating-disk-cleanup-tool#registry-key-information)
 
->Each of the modified registry sub keys may contain a REG_DWORD type registry value StateFlagsNNNN, where NNNN is the number n specified in the switch. For example, after you run the cleanmgr /sageset:9 command, a registry value Stateflags0009 is added. The registry value can be set as one of the following values.
->If the option box is not selected, the value is 00000000.
->**If the option box is selected, the value is 00000002**.
+>Each of the modified registry sub keys may contain a REG_DWORD type registry value StateFlagsNNNN, where NNNN is the number n specified in the switch. For example, after you run the cleanmgr /sageset:9 command, a registry value Stateflags0009 is added. The registry value can be set as one of the following values.<br>If the option box is not selected, the value is 00000000.<br>**If the option box is selected, the value is 00000002**.
 
 
 到对应的注册表看一看,还是挺多的,既然都被列在cleanmgr里,那都是不会影响操作系统正常运行的文件,可删.
