@@ -1,22 +1,22 @@
 # MECM部署DiskcleanUp
 
-**记录一次捣鼓MECM的过程,不是一件很麻烦的事情,但是估计所有Helpdesk都会遇到的头疼问题。**
+**记录一次捣鼓MECM的过程,不是一件很麻烦的事情,但是估计所有Helpdesk都会遇到的头疼问题.**
 
-1. 现状：
+## 现状：
    - 所有电脑通过软件中心安装质量更新和功能更新,部分OU的账号属于本地管理员组,另外一部分不属于.
    - 各公司管理员交付电脑时未充分考虑员工使用情况,采购的电脑磁盘较小,系统文件夹全都在系统分区下；365Apps（Outlook）默认文件夹也都在系统分区.
    - 员工的操作习惯较差,喜欢把业务用文件保存在[桌面]文件夹；下载的文件不定期地删除；发送文件通过邮件附件形式发送.
 
-2. 问题：
+## 问题：
    - 因为上面的这些原因,使得C分区剩余空间会被快速得使用掉,最终导致下一次功能更新甚至质量更新无法正常进行.
 
-3. 需求：
+## 需求：
    - 各公司规定不一样,不更改原有GPO（就算让所有账号都在本地管理员组,不运行磁盘清理的人永远不会执行）
    - 让员工无需操作就可以自动删除不需要的文件.
    - 最后让所有接入网内的电脑能够正常地通过软件中心进行质量更新和功能更新.
 
 
-4. 思路：
+## 思路：
    - 删掉无用的系统文件
      - %SystemRoot%\TEMP	(虽然没多少Windows软件会写缓存到这里,不过这个路径下的文件理论上来说没必要长期存在)
      - %SystemRoot%\ccmcache	(MECM从分配点下载过来的部署包文件,反正可以反复下载)  
@@ -26,19 +26,22 @@
        
    - 重定向部分系统文件夹(桌面\下载\文档\Outlook保存目录\Onedrive同步目录等)
 
-5. 解决：
-**思路中前一项是维护，后一项是解决问题，考虑到后一项实际实施起来受限(个人习惯等)较多,先从简单的删文件开始**
+## 解决：
+**思路中前一项是维护,后一项是解决问题,考虑到后一项实际实施起来受限(个人习惯等)较多,先从简单的删文件开始.**<br>
+**删文件要先解决单台设备,功能正常后再通过MECE部署分发.接下来先从单台设备开始**<br>
+
+### 制作脚本
+既然思路是删掉无用的系统文件,对象大致已经有了然后就得搞清楚怎么删
 - %SystemRoot%\TEMP:
 
-因为就是个给软件放垃圾的地方,直接删掉理论上来说就可以
-Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rd)
+首先是个文件夹，Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rd)
 参数就三个,路径 /S /Q 全都需要
 
 ![dir](https://s3.bmp.ovh/imgs/2022/02/936208fbdf9aef3e.png)<br>
 ***D分区下有个test1,里面有个test2***
 
 ![rd](https://s3.bmp.ovh/imgs/2022/02/0529aa4e28273922.png)<br>
-***如上图,执行完后就删掉了 test2 这个文件夹***
+***如上图,执行完后就删掉了 test2 这个文件夹.很简单***
 
 考虑到其他需要删除的文件可能需要本地管理员 或者 需要操作注册表（后面的操作）,因此通过PowerShell执行策略的 bypass会方便一些,之后的所有操作都会尽量使用PowerShell的语句
 看看rd在powershell里有没有同样的功能
@@ -53,8 +56,10 @@ Get-help rd
 递归一下下面所有的文件夹 -Recurse <br>
 顺便强制一下防止弹确认 -Force <br>
 应该足够了<br>
+
 ![remove](https://s3.bmp.ovh/imgs/2022/02/83f901acad2de63b.png)<br>
 ***还是test2 ,执行一下***
+
 ![remove](https://s3.bmp.ovh/imgs/2022/02/0f9a32c4627cd499.png)<br>
 ***可以,没了***
 
@@ -74,7 +79,7 @@ powershell引用环境变量的时候不能直接引用,得带上$env: 更换一
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force
 ```
 ![remove](https://s3.bmp.ovh/imgs/2022/02/31ef27b4f1ab62de.png)<br>
-***可以是可以，就是报错(被占用的文件)太多***
+***可以是可以,就是报错(被占用的文件)太多***
 
 我不要看到,那就再加个 **-ErrorAction silentlycontinue** 最后再试一试
 
@@ -94,10 +99,10 @@ Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force -ErrorAction silently
 然后再启动服务 **Start-Service -Name wuauserv**
 停服务后面最好再加个等待5秒 防止有的客户端太老性能差
 
-- 4. $Windows.~BT
+- $Windows.~BT
 
 直接删除也可以的.但是在整理这个脚本过程中发现
-Windows功能更新过程中会有很多没有必要存在的文件被创建,为了解决这个问题Windows自带的磁盘清理功能是非常强大的[cleanmgr | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/cleanmgr)
+Windows功能更新过程中会有很多没有必要存在的文件被创建,为了防止这些文件占用空间,Windows自带的磁盘清理功能是非常强大的[cleanmgr | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/cleanmgr)
 除了一些账号本身产生的垃圾以外,包括清理功能更新产生的文件在内,前面的一些操作完全可以被磁盘清理覆盖进去.<br>
 ![cleanmgr](https://s3.bmp.ovh/imgs/2022/02/5955e1a5f76566d0.png)<br>
 
@@ -113,9 +118,9 @@ Windows功能更新过程中会有很多没有必要存在的文件被创建,为
 
 再跳转到具体的注册表介绍页看看怎么指定 [Automating Disk Cleanup tool - Windows Server | Microsoft Docs](https://docs.microsoft.com/en-us/troubleshoot/windows-server/backup-and-storage/automating-disk-cleanup-tool#registry-key-information)
 
->Each of the modified registry sub keys may contain a REG_DWORD type registry value StateFlagsNNNN, where NNNN is the number n specified in the switch. For example, after you run the cleanmgr /sageset:9 command, a registry value Stateflags0009 is added. The registry value can be set as one of the following values.<br>If the option box is not selected, the value is 00000000.<br>**If the option box is selected, the value is 00000002**.
+>Each of the modified registry sub keys may contain a REG_DWORD type registry value StateFlagsNNNN, where NNNN is the number n specified in the switch. For example, after you run the cleanmgr /sageset:9 command, a registry value Stateflags0009 is added. The registry value can be set as one of the following values.<br>If the option box is not selected, the value is 00000000.<br>***If the option box is selected, the value is 00000002***.
 
-
+**对需要被指定的项增加一个键值为00000002的Stateflags000x就可以了.**
 到对应的注册表看一看,还是挺多的,既然都被列在cleanmgr里,那都是不会影响操作系统正常运行的文件,可删.
 
 ![reg](https://s3.bmp.ovh/imgs/2022/02/1b1fa028b25855b4.png)<br>
@@ -158,7 +163,7 @@ cleanmgr /sagerun:1 /VERYLOWDISK
 思路就是获取VolumeCaches下面所有目录,然后每个目录里新建一个键
 由于经验比较浅,本应该很容易的一件事情结果我在这个坑里爬了将近4小时.下面就只记录几个关键的瞬间
 
-#### 第一步：
+第一步：
 ```PowerShell
 $REGS = "Windows Upgrade Log Files" ,"Windows ESD installation files" ,"Windows Error Reporting Files" ,"Windows Defender" ,"User file versions" ,"Upgrade Discarded Files" ,"Update Cleanup" ,"Thumbnail Cache" ,"Temporary Setup Files" ,"Temporary Sync Files" ,"Temporary Files" ,"System error minidump files" ,"System error memory dump files" ,"Setup Log Files" ,"RetailDemo Offline Content" ,"Recycle Bin" ,"Old ChkDsk Files" ,"Previous Installations" ,"Offline Pages Files" ,"Language Pack" ,"Internet Cache Files" ,"DownloadsFolder" ,"Downloaded Program Files" ,"Diagnostic Data Viewer database files" ,"Device Driver Packages" ,"Delivery Optimization Files" ,"D3D Shader Cache" ,"Content Indexer Cleaner" ,"BranchCache" ,"Active Setup Temp Folders"
 foreach($REG in $REGS){
@@ -242,7 +247,7 @@ vssadmin delete shadows /all /quiet
 ![ps1](https://s3.bmp.ovh/imgs/2022/02/02bb8dcea14c21e2.png)<br>
 ***After 113G可用***
 
-还是有一些没用的文件存在的。不过功能上应该是达到了。<br>
+还是有一些没用的文件存在的.不过功能上应该是达到了.<br>
 当然,直接运行这个脚本也是可以的,但是我相信我们集团员工不可能所有人都愿意/有能力去执行.况且这些语句完全没有做例外处理,万一手动执行的过程中遇到过error,员工看到个error来责怪那就百口难辨了.<br>
 既然本文是MECM部署DiskcleanUp,那么最后一步就是把脚本通过MECM部署到对应的集合.并且之所以用PowerShell的写法是因为用MECM(SCCM)去部署PowerShell非常的无脑,强力推荐!
 
@@ -296,7 +301,7 @@ vssadmin delete shadows /all /quiet
 ***有关计划,今年不会去软件中心里操作,明年也不可能操作,所以干脆静默循环地去执行.当然不希望执行一次就结束,选 [总是重试]***
 
 ![deploy](https://s3.bmp.ovh/imgs/2022/02/cec0a8fc7bc4bc4b.png)<br>
-***既然决定静默了,取消勾选任务序列进程显示。到了指定时间后,安装软件(运行任务序列)***
+***既然决定静默了,取消勾选任务序列进程显示.到了指定时间后,安装软件(运行任务序列)***
 
 ![deploy](https://s3.bmp.ovh/imgs/2022/02/71fe596c8357d590.png)<br>
 ![deploy](123)<br>
@@ -312,12 +317,12 @@ vssadmin delete shadows /all /quiet
 
 
 ![deploy](123)<br>
-***到点了,看看软件中心。状态"已安装"***
+***到点了,看看软件中心.状态"已安装"***
 
 成了,至此MECM部署DiskcleanUp结束
 
 ----
 
 最终的目的是让电脑可以避免因员工使用习惯造成系统分区被浪费 导致无法进行功能更新
-除了部署清理以外另外一个就是从根本上杜绝员工写文件到系统分区。
+除了部署清理以外另外一个就是从根本上杜绝员工写文件到系统分区.
 下一步就计划是在OSD阶段把对应文件夹移动到其他非操作系统分区(当前时间点操作会可能会影响业务连续性)
