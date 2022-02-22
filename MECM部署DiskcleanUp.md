@@ -1,32 +1,34 @@
-#MECM部署DiskcleanUp
+# MECM部署DiskcleanUp
 
-##记录一次捣鼓MECM的过程,不是一件很麻烦的事情,但是估计所有Helpdesk都会遇到的头疼问题。
+**记录一次捣鼓MECM的过程,不是一件很麻烦的事情,但是估计所有Helpdesk都会遇到的头疼问题。**
 
-###现状：
-- 所有电脑通过软件中心安装质量更新和功能更新,部分OU的账号属于本地管理员组,另外一部分不属于.
-- 各公司管理员交付电脑时未充分考虑员工使用情况,采购的电脑磁盘较小,系统文件夹全都在系统分区下；365Apps（Outlook）默认文件夹也都在系统分区.
-- 员工的操作习惯较差,喜欢把业务用文件保存在[桌面]文件夹；下载的文件不定期地删除；发送文件通过邮件附件形式发送.
+1. 现状：
+   - 所有电脑通过软件中心安装质量更新和功能更新,部分OU的账号属于本地管理员组,另外一部分不属于.
+   - 各公司管理员交付电脑时未充分考虑员工使用情况,采购的电脑磁盘较小,系统文件夹全都在系统分区下；365Apps（Outlook）默认文件夹也都在系统分区.
+   - 员工的操作习惯较差,喜欢把业务用文件保存在[桌面]文件夹；下载的文件不定期地删除；发送文件通过邮件附件形式发送.
 
-###问题：
-- 因为上面的这些原因,使得C分区剩余空间会被快速得使用掉,最终导致下一次功能更新甚至质量更新无法正常进行.
+2. 问题：
+   - 因为上面的这些原因,使得C分区剩余空间会被快速得使用掉,最终导致下一次功能更新甚至质量更新无法正常进行.
 
-###需求：
-- 各公司规定不一样,不更改原有GPO（就算让所有账号都在本地管理员组,不运行磁盘清理的人永远不会执行）
-- 让员工无需操作就可以自动删除不需要的文件.
-- 最后让所有接入网内的电脑能够正常地通过软件中心进行质量更新和功能更新.
-
-###思路：
-######可删的系统文件
-- %SystemRoot%\TEMP	(虽然没多少Windows软件会写缓存到这里,不过这个路径下的文件理论上来说没必要长期存在)
-- %SystemRoot%\ccmcache	(MECM从分配点下载过来的部署包文件,反正可以反复下载)
-- %SystemRoot%\SoftwareDistribution	(Windows更新过程中会把更新文件解压到这里,没了再下载,微软的排错也是删除这里)
-- $Windows.~BT	(Windows功能更新解压的路径,没了再下载/解压)
-- 还原点	(客户端操作系统本身坏的可能性不大,所以没有存在的必要而且默认禁用)
+3. 需求：
+   - 各公司规定不一样,不更改原有GPO（就算让所有账号都在本地管理员组,不运行磁盘清理的人永远不会执行）
+   - 让员工无需操作就可以自动删除不需要的文件.
+   - 最后让所有接入网内的电脑能够正常地通过软件中心进行质量更新和功能更新.
 
 
-###解决：
-按照上面的顺序依次
-######1. %SystemRoot%\TEMP:
+4. 思路：
+   - 删掉无用的系统文件
+     - %SystemRoot%\TEMP	(虽然没多少Windows软件会写缓存到这里,不过这个路径下的文件理论上来说没必要长期存在)
+     - %SystemRoot%\ccmcache	(MECM从分配点下载过来的部署包文件,反正可以反复下载)  
+     - %SystemRoot%\SoftwareDistribution	(Windows更新过程中会把更新文件解压到这里,没了再下载,微软的排错也是删除这里)
+     - $Windows.~BT	(Windows功能更新解压的路径,没了再下载/解压)
+     - 还原点	(客户端操作系统本身坏的可能性不大,所以没有存在的必要而且默认禁用)
+       
+   - 重定向部分系统文件夹(桌面\下载\文档\Outlook保存目录\Onedrive同步目录等)
+
+5. 解决：
+**思路中前一项是维护，后一项是解决问题，考虑到后一项实际实施起来受限(个人习惯等)较多,先从简单的删文件开始**
+- %SystemRoot%\TEMP:
 
 因为就是个给软件放垃圾的地方,直接删掉理论上来说就可以
 Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rd)
@@ -40,7 +42,7 @@ Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https
 
 考虑到其他需要删除的文件可能需要本地管理员 或者 需要操作注册表（后面的操作）,因此通过PowerShell执行策略的 bypass会方便一些,之后的所有操作都会尽量使用PowerShell的语句
 看看rd在powershell里有没有同样的功能
-```
+```PowerShell
 Get-help rd
 ```
 ![gethelp](https://s3.bmp.ovh/imgs/2022/02/9ce64572d7072234.png)<br>
@@ -58,7 +60,7 @@ Get-help rd
 
 
 用法搞定
-```
+```PowerShell
 Remove-Item -Path "%SystemRoot%\TEMP" -Recurse -Force 
 ```
 测试一下实际路径
@@ -68,7 +70,7 @@ Remove-Item -Path "%SystemRoot%\TEMP" -Recurse -Force
 
 powershell引用环境变量的时候不能直接引用,得带上$env: 更换一下,顺便TMP这个文件夹留着,下面的文件夹都不要,改一改
 
-```
+```PowerShell
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force
 ```
 ![remove](https://s3.bmp.ovh/imgs/2022/02/31ef27b4f1ab62de.png)<br>
@@ -76,23 +78,23 @@ Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force
 
 我不要看到,那就再加个 **-ErrorAction silentlycontinue** 最后再试一试
 
-```
+```PowerShell
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force -ErrorAction silentlycontinue
 ```
 ![remove](https://s3.bmp.ovh/imgs/2022/02/7b1183b3f95a8eba.png)<br>
 ***成了***
 
 
-######2. 同理 %SystemRoot%\ccmcache 也可以这么操作
+- 同理 %SystemRoot%\ccmcache 也可以这么操作
 
-######3. 这个不行 %SystemRoot%\SoftwareDistribution
+- 这个不行 %SystemRoot%\SoftwareDistribution
 
 因为Windows更新(wuauserv) 这个服务会一直使用这个文件夹
 得在操作删除前停止这个服务 **Stop-Service -Name wuauserv -Force**
 然后再启动服务 **Start-Service -Name wuauserv**
 停服务后面最好再加个等待5秒 防止有的客户端太老性能差
 
-######4. $Windows.~BT
+- 4. $Windows.~BT
 
 直接删除也可以的.但是在整理这个脚本过程中发现
 Windows功能更新过程中会有很多没有必要存在的文件被创建,为了解决这个问题Windows自带的磁盘清理功能是非常强大的[cleanmgr | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/cleanmgr)
@@ -118,7 +120,7 @@ Windows功能更新过程中会有很多没有必要存在的文件被创建,为
 
 ![reg](https://s3.bmp.ovh/imgs/2022/02/1b1fa028b25855b4.png)<br>
 
-```
+```PowerShell
 $REG = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 set-itemproperty -path "$REG\Windows Upgrade Log Files" -name StateFlags0001 -type DWORD -Value 2
 set-itemproperty -path "$REG\Windows ESD installation files" -name StateFlags0001 -type DWORD -Value 2
@@ -156,8 +158,8 @@ cleanmgr /sagerun:1 /VERYLOWDISK
 思路就是获取VolumeCaches下面所有目录,然后每个目录里新建一个键
 由于经验比较浅,本应该很容易的一件事情结果我在这个坑里爬了将近4小时.下面就只记录几个关键的瞬间
 
-第一步：
-```
+#### 第一步：
+```PowerShell
 $REGS = "Windows Upgrade Log Files" ,"Windows ESD installation files" ,"Windows Error Reporting Files" ,"Windows Defender" ,"User file versions" ,"Upgrade Discarded Files" ,"Update Cleanup" ,"Thumbnail Cache" ,"Temporary Setup Files" ,"Temporary Sync Files" ,"Temporary Files" ,"System error minidump files" ,"System error memory dump files" ,"Setup Log Files" ,"RetailDemo Offline Content" ,"Recycle Bin" ,"Old ChkDsk Files" ,"Previous Installations" ,"Offline Pages Files" ,"Language Pack" ,"Internet Cache Files" ,"DownloadsFolder" ,"Downloaded Program Files" ,"Diagnostic Data Viewer database files" ,"Device Driver Packages" ,"Delivery Optimization Files" ,"D3D Shader Cache" ,"Content Indexer Cleaner" ,"BranchCache" ,"Active Setup Temp Folders"
 foreach($REG in $REGS){
   set-itemproperty -path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\$REG" -name StateFlags0002 -type DWORD -Value 2
@@ -167,16 +169,15 @@ foreach($REG in $REGS){
 
 第二步：
 
-```
+```PowerShell
 $Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 $Full = (get-childitem $Registory).Name
 ```
 
-拿到对应的路径,并且转换成字符
-方便进行字符处理
+确定是第一步中的$REG后,获取这个路径下的所有值,并且转换成字符,方便进行字符处理
 
 第三步：
-```
+```PowerShell
 $Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 $Full = (get-childitem $Registory).Name
 foreach($single in $Full){
@@ -186,7 +187,7 @@ foreach($single in $Full){
 处理字符,拿到第一步中成功测试的所需变量
 最终就是下面这段
 
-```
+```PowerShell
 $Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 $Full = (get-childitem $Registory).Name
 foreach($single in $Full){
@@ -214,7 +215,7 @@ cleanmgr /sagerun:1 /VERYLOWDISK
 
 整合一下
 YaoNiMing3k.ps1
-```
+```PowerShell
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force -ErrorAction silentlycontinue
 Remove-Item -Path "$env:%SystemRoot%\ccmcache\*" -Recurse -Force -ErrorAction silentlycontinue
 
@@ -241,8 +242,8 @@ vssadmin delete shadows /all /quiet
 ![ps1](https://s3.bmp.ovh/imgs/2022/02/02bb8dcea14c21e2.png)<br>
 ***After 113G可用***
 
-还是有一些没用的文件存在的。
-当然直接运行也是可以的,但是我相信我们集团员工不可能所有人都愿意/有能力去执行.况且这些语句完全没有做例外处理,万一手动执行的过程中遇到过error,员工看到个error来责怪那就百口难辨了.<br>
+还是有一些没用的文件存在的。不过功能上应该是达到了。<br>
+当然,直接运行这个脚本也是可以的,但是我相信我们集团员工不可能所有人都愿意/有能力去执行.况且这些语句完全没有做例外处理,万一手动执行的过程中遇到过error,员工看到个error来责怪那就百口难辨了.<br>
 既然本文是MECM部署DiskcleanUp,那么最后一步就是把脚本通过MECM部署到对应的集合.并且之所以用PowerShell的写法是因为用MECM(SCCM)去部署PowerShell非常的无脑,强力推荐!
 
 
@@ -268,6 +269,7 @@ vssadmin delete shadows /all /quiet
 接下来创建任务序列
 ![task](https://s3.bmp.ovh/imgs/2022/02/071cad8de8c22417.png)<br>
 ***就是个运行脚本的序列,从空模板里选中脚本就可以***
+
 ![task](https://s3.bmp.ovh/imgs/2022/02/56104ca46b1832da.png)<br>
 ***下一步 信息后期全都自己编辑***
 
