@@ -49,7 +49,7 @@
 既然思路是删掉无用的系统文件,对象大致已经有了然后就得搞清楚怎么删
 - %SystemRoot%\TEMP:
 
-首先是个文件夹，Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rd)
+要删除的是一个文件夹，Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rd)
 参数就三个,路径 /S /Q 全都需要
 
 ![dir](https://s3.bmp.ovh/imgs/2022/02/936208fbdf9aef3e.png)<br>
@@ -241,7 +241,7 @@ cleanmgr /sagerun:1 /VERYLOWDISK
 YaoNiMing3k.ps1
 ```PowerShell
 Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force -ErrorAction silentlycontinue
-Remove-Item -Path "$env:%SystemRoot%\ccmcache\*" -Recurse -Force -ErrorAction silentlycontinue
+Remove-Item -Path "$env:SystemRoot\ccmcache\*" -Recurse -Force -ErrorAction silentlycontinue
 
 Stop-Service -Name wuauserv -Force
 Start-Sleep -Seconds 5
@@ -296,16 +296,16 @@ vssadmin delete shadows /all /quiet
 
 接下来创建任务序列
 ![task](https://s3.bmp.ovh/imgs/2022/02/071cad8de8c22417.png)<br>
-***就是个运行脚本的序列,从空模板里选中脚本就可以***
+***创建自定义任务序列***
 
 ![task](https://s3.bmp.ovh/imgs/2022/02/56104ca46b1832da.png)<br>
-***下一步 信息后期全都自己编辑***
+***下一步 基础信息后期再编辑***
 
 ![task](https://s3.bmp.ovh/imgs/2022/02/7b8a54cefafc8858.png)<br>
-***编辑,Add一个 运行脚本的序列***
+***右键任务序列->编辑->Add一个 运行Powershell脚本***
 
 ![task](https://s3.bmp.ovh/imgs/2022/02/6f0a3e73338bda87.png)<br>
-***选择上面创建的部署包,脚本名那里填脚本的文件名,执行策略确认是Bypass (很重要,不修改客户端本身执行策略的同时,也能让客户端执行本次非签名脚本)***
+***选择上面创建的部署包,脚本名那里填脚本的文件名,Powershell执行策略 选择Bypass (很重要,不修改客户端本身执行策略的同时,也能让客户端执行本次非签名脚本)***
 
 
 
