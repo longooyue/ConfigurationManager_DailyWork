@@ -327,19 +327,19 @@ vssadmin delete shadows /all /quiet
 ***既然决定静默了,取消勾选任务序列进程显示.到了指定时间后,安装软件(运行任务序列)***
 
 ![deploy](https://s3.bmp.ovh/imgs/2022/02/71fe596c8357d590.png)<br>
-![deploy](123)<br>
+![deploy](https://s3.bmp.ovh/imgs/2022/02/733f85365a2b24d4.png)<br>
 ***放个设备到对应集合里,等一等***
 
-![deploy](123)<br>
+![deploy](https://s3.bmp.ovh/imgs/2022/02/fac4122c223d2ff8.png)<br>
 ***客户端一侧：软件中心里来了***
 
-![deploy](123)<br>
+![deploy](https://s3.bmp.ovh/imgs/2022/02/a2d46efd558c55ba.png)<br>
 ***点进去看一看***
 因为第一次到达这个设备,部署包里的脚本还没下载过来所以运行不了脚本,第一次失败.
 之前设置的重试策略是 [总是重试] 所以等一等吧
 
 
-![deploy](123)<br>
+![deploy](https://s3.bmp.ovh/imgs/2022/02/a7792cc33a587f27.png)<br>
 ***到点了,看看软件中心.状态"已安装"***
 
 成了,至此MECM部署DiskcleanUp结束
