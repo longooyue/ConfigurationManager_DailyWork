@@ -1,6 +1,6 @@
 # 利用WindowsServer实现基于时间的QoS更新
 
-**记录一次捣鼓QoS的过程,不是一件很麻烦的事情,但是估计使用MPLS组网的公司的Helpdesk都会遇到的头疼问题.**
+**记录一次捣鼓QoS的过程,不是一件很麻烦的事情,但是估计使用MPLS VPN组网的公司的Helpdesk都会遇到的头疼问题.**
 
 ****
 ## 目录
@@ -36,9 +36,11 @@
    - 把两者结合一下就可以
 
 ## 解决：
-**根据常识,Windows所有的设置都保存在注册表里,展示出来的GUI只是作为更新注册表的入口**<br>
-**对本地组策略的更新如果希望立刻生效必须要执行 gpupte /force**<br>
-**那么应该有一个类似于"写入缓存"一样的东西存在,更新(本地)组策略的同时立刻更新该"写入缓存",执行 gpupte /force后将"写入缓存"中的内容更新到注册表中**<br>
+**根据常识,Windows所有的设置都保存在注册表里,展示出来的GUI只是作为更新注册表的入口.
+有关QoS策略的注册表保存在这个地址HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\QoS\ <br>**
+但是直接修改注册表并不会让QoS生效,必须通过组策略这个入口来进行操作,
+对组策略的更新会立刻生效而不需要执行 **gpupte /force**<br>
+
 
 **那么首先看看QoS在哪里改,要怎么改**<br>
 ### 摸索QoS的实现
@@ -47,8 +49,7 @@
 本地组策略编辑器->计算机设置->Windows设置->基于策略的QoS<br>
 ![](https://s3.bmp.ovh/imgs/2022/02/51e31b1f42e69b28.png)<br>
 
-接下来通过关键词摸索出来,之前提到的"写入缓存"就是Registry.pol<br>
-[Registry Policy File Format | Microsoft Docs](https://docs.microsoft.com/en-us/previous-versions/windows/desktop/policy/registry-policy-file-format)
+接下来看看能不能通过文件/注册表的形式去代替在GUI上操作,完成QoS的更新,通过关键词摸索出来,这个所谓的"文件"是Registry.pol ([Registry Policy File Format | Microsoft Docs](https://docs.microsoft.com/en-us/previous-versions/windows/desktop/policy/registry-policy-file-format))
 
 新建一个QoS 看一看Registry.pol 和 注册表的变化
 
