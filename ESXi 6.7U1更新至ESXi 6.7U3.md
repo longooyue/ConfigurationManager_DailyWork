@@ -1,0 +1,430 @@
+# ESXi 6.7U1更新至ESXi 6.7U3
+
+**回忆一次ESXi更新的过程,如果使用OEM定制镜像来尝试更新肯定会遇到更新不了的情况,虽然VMWare提供了解决办法,但是文章有错.**
+
+****
+## 目录
+* [现状](#现状)
+* [问题](#问题)
+* [需求](#需求)
+* [思路](#思路)
+* [解决](#解决)
+    * 制作脚本
+    * 优化脚本
+    * 完成脚本
+    * 测试脚本
+* [结束语](#结束语)
+
+
+
+
+直接通过关键词应该能搜出来很多经验文章,这里还是直接引用VMWare的文档,虽然是U2的文档,但是U3理论也是通用的.
+https://docs.vmware.com/en/VMware-vSphere/6.7/vsphere-esxi-672-upgrade-guide.pdf
+其中67页,有这么一句
+```
+Important If you are updating ESXi from a zip bundle in a VMware-supplied depot, either online 
+from the VMware Web site or downloaded locally, VMware supports only the update method 
+specified for VMware-supplied depots in the topic Upgrade or Update a Host with Image Profiles
+```
+对应 topic 在68页,也有这么一句
+```
+Important If you are upgrading or updating ESXi from a zip bundle in a VMware-supplied depot, 
+either online from the VMware website or downloaded locally, VMware supports only the update 
+command esxcli software profile update --depot=depot_location --profile=profile_name.
+```
+文档中提到,只支持该方法  esxcli software profile update --depot=depot_location --profile=profile_name  进行更新,原因也很简单,关键词一下ESXi更新报错,就能找到一堆文章.里面基本用的都是vib install 等方法进行更新的.
+![Bing](https://i.328888.xyz/2023/02/22/gFuM8.png)<br>
+
+其实在VMWare 的KB https://kb.vmware.com/s/article/56145 中也有对应的解决方法(其实就是详细介绍 esxcli software profile update --depot=depot_location --profile=profile_name 的使用方法,在这里进行介绍 )
+
+在KB中给的方法1中
+
+- Using profile update command:
+  - __To get the profile name run the below command,__
+    __esxcli software profile get__
+
+    __Example:__
+    __[root@esx1:~] esxcli software profile get__
+    __HPE-ESXi-6.7.0-Update3-iso-Gen9plus-670.U3.10.4.5.19__
+    __Name: HPE-ESXi-6.7.0-Update3-iso-Gen9plus-670.U3.10.4.5.19__
+    __Vendor: Hewlett Packard Enterprise__
+    __Creation Time: 2020-02-22T06:07:54__
+    __Modification Time: 2020-02-22T06:08:10__
+    __Stateless Ready: True__
+    __...__ <br>
+    
+这部分我个人认为是是有些多余的.顶多算是一个检查
+因为实际更新过程中,需要的profile name并不是通过这个方法获得的.
+在后面的更新步骤中,KB给的例子如下
+ 
+Example:
+ esxcli software profile update -p ESXi-6.7.0-2018xxxxxxx-standard -d /vmfs/volumes/datastore1/update-from-esxi6.7-6.7_update01.zip
+
+__Note: To get a list of available profiles within a path use the command below:__
+```
+esxcli software sources profile list -d <location of ZIP file> 
+```
+
+下面实际演示一下我操作过程
+
+```Bash
+PS C:\WINDOWS\system32> ssh root@172.21.1.81
+Password:
+The time and date of this login have been sent to the system logs.
+
+WARNING:
+   All commands run on the ESXi shell are logged and may be included in
+   support bundles. Do not provide passwords directly on the command line.
+   Most tools can prompt for secrets or accept them from standard input.
+
+VMware offers supported, powerful system administration tools.  Please
+see www.vmware.com/go/sysadmintools for details.
+
+The ESXi Shell can be disabled by an administrative user. See the
+vSphere Security documentation for more information.
+[root@Localhost:~] ls /vmfs/volumes/ESXI_LOCAL/iso/
+ESXi670-202210001.zip
+SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_ChnSimp_DC_STD_MLF_X22-74329.ISO
+VMware-VIM-all-6.7.0-15132721.iso
+ubuntu-22.04.1-live-server-amd64.iso
+[root@Localhost:~] esxcli software sources profile list -d /vmfs/volumes/ESXI_LOCAL/iso/ESXi670-202210001.zip
+Name                              Vendor        Acceptance Level  Creation Time        Modification Time
+--------------------------------  ------------  ----------------  -------------------  -------------------
+ESXi-6.7.0-20221001001s-no-tools  VMware, Inc.  PartnerSupported  2022-09-21T13:36:44  2022-09-21T13:36:44
+ESXi-6.7.0-20221004001-standard   VMware, Inc.  PartnerSupported  2022-09-21T13:36:44  2022-09-21T13:36:44
+ESXi-6.7.0-20221001001s-standard  VMware, Inc.  PartnerSupported  2022-09-21T13:36:44  2022-09-21T13:36:44
+ESXi-6.7.0-20221004001-no-tools   VMware, Inc.  PartnerSupported  2022-09-21T13:36:44  2022-09-21T13:36:44
+[root@Localhost:~] esxcli software profile update -p ESXi-6.7.0-20221001001s-standard -d /vmfs/volumes/ESXI_LOCAL/iso/ESXi670-202210001.zip
+```
+
+整理了一下操作步骤,一共就下面这三行
+```
+2023-02-21T09:39:35Z shell[2239481]: [root]: esxcli software sources profile list -d /vmfs/volumes/ESXI_LOCAL/iso/ESXi670-202210001.zip
+2023-02-21T10:04:53Z shell[2239481]: [root]: esxcli software profile update -p ESXi-6.7.0-20221001001s-standard -d /vmfs/volumes/ESXI_LOCAL/iso/ESXi670-202210001.zip
+2023-02-21T10:06:11Z shell[2239481]: [root]: reboot
+```
+
+## 问题：
+   - 因为上面的这些原因,使得C分区剩余空间会被快速得使用掉,最终导致下一次功能更新甚至质量更新无法正常进行.
+
+## 需求：
+   - 各公司规定不一样,不更改原有GPO（就算让所有账号都在本地管理员组,不运行磁盘清理的人永远不会执行）
+   - 让员工无需操作就可以自动删除不需要的文件.
+   - 最后让所有接入网内的电脑能够正常地通过软件中心进行质量更新和功能更新.
+
+
+## 思路：
+   - 删掉无用的系统文件
+     - %SystemRoot%\TEMP	(虽然没多少Windows软件会写缓存到这里,不过这个路径下的文件理论上来说没必要长期存在)
+     - %SystemRoot%\ccmcache	(MECM从分配点下载过来的部署包文件,反正可以反复下载)  
+     - %SystemRoot%\SoftwareDistribution	(Windows更新过程中会把更新文件解压到这里,没了再下载,微软的排错也是删除这里)
+     - $Windows.~BT	(Windows功能更新解压的路径,没了再下载/解压)
+     - 还原点	(客户端操作系统本身坏的可能性不大,所以没有存在的必要而且默认禁用)
+       
+   - 重定向部分系统文件夹(桌面\下载\文档\Outlook保存目录\Onedrive同步目录等)
+
+## 解决：
+**思路中前一项是维护,后一项是解决问题,考虑到后一项实际实施起来受限(个人习惯等)较多,先从简单的删文件开始.**<br>
+**删文件要先解决单台设备,功能正常后再通过MECE部署分发.接下来先从单台设备开始**<br>
+
+### 制作脚本
+既然思路是删掉无用的系统文件,对象大致已经有了然后就得搞清楚怎么删
+- %SystemRoot%\TEMP:
+
+要删除的是一个文件夹，Windows命令提示符删除文件夹的的操作是 [rd | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rd)
+参数就三个,路径 /S /Q 全都需要
+
+![dir](https://s3.bmp.ovh/imgs/2022/02/936208fbdf9aef3e.png)<br>
+***D分区下有个test1,里面有个test2***
+
+![rd](https://s3.bmp.ovh/imgs/2022/02/0529aa4e28273922.png)<br>
+***如上图,执行完后就删掉了 test2 这个文件夹.很简单***
+
+
+![gethelp](https://s3.bmp.ovh/imgs/2022/02/9ce64572d7072234.png)<br>
+***有的,在PowerShell里rd是remove-item的别名,但是用法不一样了.明显可以发现参数多了.***
+<br>
+看看用法[Remove-Item (Microsoft.PowerShell.Management) - PowerShell | Microsoft Docs](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/remove-item?view=powershell-7.1)<br>
+需要一个路径 -path <br>
+递归一下下面所有的文件夹 -Recurse <br>
+顺便强制一下防止弹确认 -Force <br>
+应该足够了<br>
+
+![remove](https://s3.bmp.ovh/imgs/2022/02/83f901acad2de63b.png)<br>
+***还是test2 ,执行一下***
+
+![remove](https://s3.bmp.ovh/imgs/2022/02/0f9a32c4627cd499.png)<br>
+***可以,没了***
+
+
+用法搞定
+```PowerShell
+Remove-Item -Path "%SystemRoot%\TEMP" -Recurse -Force 
+```
+测试一下实际路径
+
+![remove](https://s3.bmp.ovh/imgs/2022/02/bfda479286f974a2.png)<br>
+***报错了,因为该路径不存在***
+
+powershell引用环境变量的时候不能直接引用,得带上$env: 更换一下,顺便TMP这个文件夹留着,下面的文件夹都不要,改一改
+
+```PowerShell
+Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force
+```
+![remove](https://s3.bmp.ovh/imgs/2022/02/31ef27b4f1ab62de.png)<br>
+***可以是可以,就是报错(被占用的文件)太多***
+
+我不要看到,那就再加个 **-ErrorAction silentlycontinue** 最后再试一试
+
+```PowerShell
+Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force -ErrorAction silentlycontinue
+```
+![remove](https://s3.bmp.ovh/imgs/2022/02/7b1183b3f95a8eba.png)<br>
+***成了***
+
+
+- 同理 %SystemRoot%\ccmcache 也可以这么操作
+
+- 这个不行 %SystemRoot%\SoftwareDistribution
+
+因为Windows更新(wuauserv) 这个服务会一直使用这个文件夹
+得在操作删除前停止这个服务 **Stop-Service -Name wuauserv -Force**
+然后再启动服务 **Start-Service -Name wuauserv**
+停服务后面最好再加个等待5秒 防止有的客户端太老性能差
+
+- $Windows.~BT
+
+直接删除也可以的.但是在整理这个脚本过程中发现
+Windows功能更新过程中会有很多没有必要存在的文件被创建,为了防止这些文件占用空间,Windows自带的磁盘清理功能是非常强大的[cleanmgr | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/cleanmgr)
+除了一些账号本身产生的垃圾以外,包括清理功能更新产生的文件在内,前面的一些操作完全可以被磁盘清理覆盖进去.<br>
+![cleanmgr](https://s3.bmp.ovh/imgs/2022/02/5955e1a5f76566d0.png)<br>
+
+
+看一下用法
+[cleanmgr | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/cleanmgr)
+需要指定(其实就是所有)删除项,还需要不弹出用户确认项(静默)
+**/sageset:n /sagerun:n /verylowdisk**
+关于指定项,用法页面里没有详细介绍,但是另外一个微软页面([Automating Disk Cleanup tool - Windows Server | Microsoft Docs](https://docs.microsoft.com/en-us/troubleshoot/windows-server/backup-and-storage/automating-disk-cleanup-tool))中有介绍
+
+>/sageset:n - This switch displays the Disk Cleanup Settings dialog box and creates a registry key to store the settings you select. The n value is stored in the registry and allows you to specify different tasks for Disk Cleanup to run. The n value can be any integer value from 0 to 65535. To get all the available options when you use the /sageset switch, you may need to specify the drive letter that contains the Windows installation.
+>For more information, see Registry key information.
+
+再跳转到具体的注册表介绍页看看怎么指定 [Automating Disk Cleanup tool - Windows Server | Microsoft Docs](https://docs.microsoft.com/en-us/troubleshoot/windows-server/backup-and-storage/automating-disk-cleanup-tool#registry-key-information)
+
+>Each of the modified registry sub keys may contain a REG_DWORD type registry value StateFlagsNNNN, where NNNN is the number n specified in the switch. For example, after you run the cleanmgr /sageset:9 command, a registry value Stateflags0009 is added. The registry value can be set as one of the following values.<br>If the option box is not selected, the value is 00000000.<br>***If the option box is selected, the value is 00000002***.
+
+**对需要被指定的项增加一个键值为00000002的Stateflags000x就可以了.**
+到对应的注册表看一看,还是挺多的,既然都被列在cleanmgr里,那都是不会影响操作系统正常运行的文件,可删.
+
+![reg](https://s3.bmp.ovh/imgs/2022/02/1b1fa028b25855b4.png)<br>
+
+```PowerShell
+$REG = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+set-itemproperty -path "$REG\Windows Upgrade Log Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Windows ESD installation files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Windows Error Reporting Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Windows Defender" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\User file versions" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Upgrade Discarded Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Update Cleanup" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Thumbnail Cache" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Temporary Sync Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Temporary Setup Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Temporary Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\System error minidump files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\System error memory dump files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Setup Log Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\RetailDemo Offline Content" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Recycle Bin" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Previous Installations" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Old ChkDsk Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Offline Pages Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Language Pack" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Internet Cache Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\DownloadsFolder" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Downloaded Program Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Diagnostic Data Viewer database files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Device Driver Packages" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Delivery Optimization Files" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\D3D Shader Cache" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Content Indexer Cleaner" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\BranchCache" -name StateFlags0001 -type DWORD -Value 2
+set-itemproperty -path "$REG\Active Setup Temp Folders" -name StateFlags0001 -type DWORD -Value 2
+cleanmgr /sagerun:1 /VERYLOWDISK
+```
+理论上整合一下上面几块就可以使用了,但是注册表这一块太难看了.假如脚本后期要维护,肯定是不希望改这么长一串的.这一段能通过Powershell语法让它变得好看一些.
+
+### 优化脚本
+
+思路就是获取VolumeCaches下面所有目录,然后每个目录里新建一个键
+由于经验比较浅,本应该很容易的一件事情结果我在这个坑里爬了将近4小时.下面就只记录几个关键的瞬间
+
+第一步：
+```PowerShell
+$REGS = "Windows Upgrade Log Files" ,"Windows ESD installation files" ,"Windows Error Reporting Files" ,"Windows Defender" ,"User file versions" ,"Upgrade Discarded Files" ,"Update Cleanup" ,"Thumbnail Cache" ,"Temporary Setup Files" ,"Temporary Sync Files" ,"Temporary Files" ,"System error minidump files" ,"System error memory dump files" ,"Setup Log Files" ,"RetailDemo Offline Content" ,"Recycle Bin" ,"Old ChkDsk Files" ,"Previous Installations" ,"Offline Pages Files" ,"Language Pack" ,"Internet Cache Files" ,"DownloadsFolder" ,"Downloaded Program Files" ,"Diagnostic Data Viewer database files" ,"Device Driver Packages" ,"Delivery Optimization Files" ,"D3D Shader Cache" ,"Content Indexer Cleaner" ,"BranchCache" ,"Active Setup Temp Folders"
+foreach($REG in $REGS){
+  set-itemproperty -path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\$REG" -name StateFlags0002 -type DWORD -Value 2
+}
+```
+先反向确定需要什么样的变量才能成功操作
+
+第二步：
+
+```PowerShell
+$Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+$Full = (get-childitem $Registory).Name
+```
+
+确定是第一步中的$REG后,获取这个路径下的所有值,并且转换成字符,方便进行字符处理
+
+第三步：
+```PowerShell
+$Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+$Full = (get-childitem $Registory).Name
+foreach($single in $Full){
+  $dir = $single.split('\')[7]
+}
+```
+处理字符,拿到第一步中成功测试的所需变量
+最终就是下面这段
+
+```PowerShell
+$Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+$Full = (get-childitem $Registory).Name
+foreach($single in $Full){
+  $dir = $single.split('\')[7]
+  set-itemproperty -path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\$dir" -name StateFlags0001 -type DWORD -Value 2
+}
+cleanmgr /sagerun:1 /VERYLOWDISK
+```
+
+既然用到了cleanmgr,那对应的磁盘清理这个软件里还有一些别的删除功能吗,看一下
+![cleanmgr](https://s3.bmp.ovh/imgs/2022/02/441d8896a1a52e21.png)<br>
+
+
+
+
+程序和功能就是常说的卸载,下面的系统还原和卷影复制这个得注意一下.
+首先这是个什么功能,贴上微软的简介页 [Volume Shadow Copy Service | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/storage/file-server/volume-shadow-copy-service)
+简单地理解成Windows提供的快照就可以.一般人可能觉得我或者公司员工没用这个服务,但恶心的一点是,微软开启这个服务对应的程序(进程?)叫做创建还原点,而且有的第三方软件创建备份时就是使用这个服务.理论上来说Windows 客户端没有这种本地备份需求（文件可以通过Onedrive等同步盘,用户备份可以做在on-premise的AD上）.虽然默认不启用,但是考虑到还原点这个名词让人感觉很安心,不能控制员工自己手动开启,考虑到几乎是没有意义的浪费本地磁盘,所以可以删<br>
+![cleanmgr](https://s3.bmp.ovh/imgs/2022/02/4f7f462b848a79f0.png)<br>
+
+管理工具的简介 [vssadmin | Microsoft Docs](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/vssadmin)
+一共就5个参数,全都删掉且不要交互
+**vssadmin delete shadows /all /quiet**
+
+### 完成脚本
+
+整合一下
+YaoNiMing3k.ps1
+```PowerShell
+Remove-Item -Path "$env:SystemRoot\TEMP\*" -Recurse -Force -ErrorAction silentlycontinue
+Remove-Item -Path "$env:SystemRoot\ccmcache\*" -Recurse -Force -ErrorAction silentlycontinue
+
+Stop-Service -Name wuauserv -Force
+Start-Sleep -Seconds 5
+Remove-Item "$env:SystemRoot\SoftwareDistribution" -Recurse -Force - ErrorAction SilentlyContinue
+Start-Service -Name wuauserv
+
+$Registory = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+$Full = (get-childitem $Registory).Name
+foreach($single in $Full){
+  $dir = $single.split('\')[7]
+  set-itemproperty -path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\$dir" -name StateFlags0002 -type DWORD -Value 2
+}
+cleanmgr /sagerun:2 /VERYLOWDISK
+
+vssadmin delete shadows /all /quiet
+```
+至此脚本部分就已经完成了.
+
+### 测试脚本
+每一个坑都已经踩过了,脚本应该是可以正常运行的了.试一试
+
+![ps1](https://s3.bmp.ovh/imgs/2022/02/730d4515f6e268b9.png)<br>
+***Before 104G可用***
+
+![ps1](https://s3.bmp.ovh/imgs/2022/02/02bb8dcea14c21e2.png)<br>
+***After 113G可用***
+
+还是有一些没用的文件存在的.不过功能上应该是达到了.<br>
+当然,直接运行这个脚本也是可以的,但是我相信我们集团员工不可能所有人都愿意/有能力去执行.况且这些语句完全没有做例外处理,万一手动执行的过程中遇到过error,员工看到个error来责怪那就百口难辨了.<br>
+既然本文是MECM部署DiskcleanUp,那么最后一步就是把脚本通过MECM部署到对应的集合.并且之所以用PowerShell的写法是因为用MECM(SCCM)去部署PowerShell非常的无脑,强力推荐!
+
+### 部署脚本
+
+那么接下来就进入MECM上的操作,远程桌面到主站点,打开控制台
+
+![ps1](https://s3.bmp.ovh/imgs/2022/02/f695a8c2157e6b5c.png)<br>
+***把脚本放好位置***
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/6d234131e49f1b7c.png)<br>
+***创建部署包***
+
+![UNC](https://s3.bmp.ovh/imgs/2022/02/a6dac8bf2b71ffee.png)<br>
+***路径需要是UNC格式***
+
+![C](https://s3.bmp.ovh/imgs/2022/02/3b295035029857b2.png)<br>
+***就是个只包含一个脚本的部署包,没有程序***
+
+![done](https://s3.bmp.ovh/imgs/2022/02/09f2521dfe715b90.png)<br>
+完成后
+把部署包
+![deploy1](https://s3.bmp.ovh/imgs/2022/02/544657659f8235aa.png) Distribute一下到所有的分配点上
+
+接下来创建任务序列
+![task](https://s3.bmp.ovh/imgs/2022/02/071cad8de8c22417.png)<br>
+***创建自定义任务序列***
+
+![task](https://s3.bmp.ovh/imgs/2022/02/56104ca46b1832da.png)<br>
+***下一步 基础信息后期再编辑***
+
+![task](https://s3.bmp.ovh/imgs/2022/02/7b8a54cefafc8858.png)<br>
+***右键任务序列->编辑->Add一个 运行Powershell脚本***
+
+![task](https://s3.bmp.ovh/imgs/2022/02/6f0a3e73338bda87.png)<br>
+***选择上面创建的部署包,脚本名那里填脚本的文件名,Powershell执行策略 选择Bypass (很重要,不修改客户端本身执行策略的同时,也能让客户端执行本次非签名脚本)***
+
+
+
+<br>接下来deploy 这个任务序列
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/5943835a3198f39e.png)<br>
+***选一下要部署的集合***
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/4dfc41354b38c65a.png)<br>
+***对于连[磁盘清理]这个自己家里电脑也一样可以操作的步骤都不愿意进行操作的员工来说,让他们打开[软件中心]点更不现实了.改成 [必须]***
+
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/18737bec3b4f09bd.png)<br>
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/4430575c315e6c74.png)<br>
+***有关计划,今年不会去软件中心里操作,明年也不可能操作,所以干脆静默循环地去执行.当然不希望执行一次就结束,选 [总是重试]***
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/cec0a8fc7bc4bc4b.png)<br>
+***既然决定静默了,取消勾选任务序列进程显示.到了指定时间后,安装软件(运行任务序列)***
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/71fe596c8357d590.png)<br>
+![deploy](https://s3.bmp.ovh/imgs/2022/02/733f85365a2b24d4.png)<br>
+***放个设备到对应集合里,等一等***
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/fac4122c223d2ff8.png)<br>
+***客户端一侧：软件中心里来了***
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/a2d46efd558c55ba.png)<br>
+***点进去看一看***
+因为第一次到达这个设备,部署包里的脚本还没下载过来所以运行不了脚本,第一次失败.
+之前设置的重试策略是 [总是重试] 所以等一等吧
+
+
+![deploy](https://s3.bmp.ovh/imgs/2022/02/a7792cc33a587f27.png)<br>
+***到点了,看看软件中心.状态"已安装"***
+
+成了,至此MECM部署DiskcleanUp结束
+
+----
+## 结束语
+
+最终的目的是让电脑可以避免因员工使用习惯造成系统分区被浪费 导致无法进行功能更新
+除了部署清理以外另外一个就是从根本上杜绝员工写文件到系统分区.
+下一步就计划是在OSD阶段把对应文件夹移动到其他非操作系统分区(当前时间点操作会可能会影响业务连续性)
