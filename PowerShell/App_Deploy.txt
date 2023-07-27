@@ -1,0 +1,1 @@
+New-CMApplicationDeployment -Name "P21Microsoft365Apps_64bit_2208" -AvailableDateTime '02/16/2023 08:00:00' -CollectionName 'NeedtoInstall_Microsoft365Apps_64bit_2208' -DeadlineDateTime '03/13/2023 11:50:00' -DeployAction Install -DeployPurpose Required

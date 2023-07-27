@@ -1,0 +1,5 @@
+$schedule = New-CMSchedule -RecurInterval Days -RecurCount 1 -Start "2021-05-07T11:35:00 +08:00"
+
+set-CMCollection -Name SMIT无锡 -RefreshSchedule $schedule
+
+Get-CMCollection | Where-Object -FilterScript {$_.Comment -eq 'Others'} | Set-CMCollection -RefreshSchedule $schedule

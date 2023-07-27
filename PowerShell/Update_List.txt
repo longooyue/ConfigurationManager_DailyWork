@@ -1,0 +1,1 @@
+Get-CMSoftwareUpdateDeployment -Name "2020*" -CollectionId "C1100018" | Select-Object AssignmentName | format-table 

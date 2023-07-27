@@ -1,0 +1,8 @@
+$PCs = Get-CMDeviceCollectionDirectMembershipRule -CollectionName NeedtoInstall_SetWireless
+
+foreach ($PC in $PCs)
+    {
+                # Delete computer from Collection
+                Remove-CMDeviceCollectionDirectMembershipRule -CollectionName NeedtoInstall_SetWireless  -ResourceName $PC.RuleName -force
+    }
+

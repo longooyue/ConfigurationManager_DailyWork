@@ -1,0 +1,4 @@
+Get-CMSoftwareUpdateDeployment -CollectionName "唐山" | Remove-CMSoftwareUpdateDeployment -Force
+
+Get-CMSoftwareUpdateDeployment -Name "2022*" -CollectionId "C1100018" | Remove-CMSoftwareUpdateDeployment -Force
+

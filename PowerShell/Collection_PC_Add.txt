@@ -1,0 +1,3 @@
+$computers = Get-Content -Path "D:\daily\ConfigurationManager\Collection_PC_AddList.txt"
+foreach($computer in $computers){ Add-CMDeviceCollectionDirectMembershipRule -CollectionName "TempExclude365Apps" -ResourceID ((Get-CMDevice -Name $computer -resource).ResourceID) }
+

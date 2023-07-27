@@ -1,0 +1,2 @@
+Get-CMApplicationDeployment -CollectionName "NeedtoInstall_Microsoft365Apps_2002" | set-CMApplicationDeployment -DeadlineDateTime "2021/07/31 10:20"
+

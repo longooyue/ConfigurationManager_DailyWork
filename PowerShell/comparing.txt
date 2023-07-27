@@ -1,0 +1,4 @@
+$collectionName = "NeedtoInstall_Test1"
+$membershiprule = Get-CMDeviceCollectionDirectMembershipRule -CollectionName $collectionName| select RuleName, ResourceID
+$actualmember = Get-CMDevice -CollectionName $collectionName | select Name, ResourceID
+compare-object $membershiprule $actualmember -PassThru -Property ResourceID
