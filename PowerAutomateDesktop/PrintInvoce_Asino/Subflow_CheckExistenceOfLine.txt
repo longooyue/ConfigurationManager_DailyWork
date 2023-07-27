@@ -1,3 +1,0 @@
-IF ExcelData[LineNum][ColumnNum] = $'''%''%''' THEN
-    SET LineEnd TO 1
-END

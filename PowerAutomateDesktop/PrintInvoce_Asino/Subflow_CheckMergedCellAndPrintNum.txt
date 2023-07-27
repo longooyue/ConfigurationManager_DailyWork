@@ -1,6 +1,0 @@
-# //結合セルの有無情報を変数に入れる
-SET ColumnNum TO 10
-SET MergedCell TO ExcelData[LineNum][ColumnNum]
-# //普通发票と専用发票の上限金額制限による发票印刷回数を変数に入れる
-SET ColumnNum TO 14
-SET PrintNum TO ExcelData[LineNum][ColumnNum]
