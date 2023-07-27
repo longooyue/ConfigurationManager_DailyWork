@@ -1,0 +1,41 @@
+# //３
+MouseAndKeyboard.MoveMouse X: 985 Y: 300 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+# //βボタン
+MouseAndKeyboard.MoveMouse X: 270 Y: 376 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+WAIT 2
+MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+CALL Subflow_SearchAmountInfoByModel
+# //前行の形番情報を記入
+SET ColumnNum TO 8
+# //1３
+MouseAndKeyboard.MoveMouse X: 324 Y: 377 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: $'''{LControlKey}({A})''' DelayBetweenKeystrokes: 10 SendTextAsHardwareKeys: False
+MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: $'''{Delete}''' DelayBetweenKeystrokes: 10 SendTextAsHardwareKeys: False
+MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum - 1][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+SET ColumnNum TO 9
+# //14
+MouseAndKeyboard.MoveMouse X: 394 Y: 377 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+SET ColumnNum TO 12
+# //16
+MouseAndKeyboard.MoveMouse X: 561 Y: 378 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+SET ColumnNum TO 13
+# //17
+MouseAndKeyboard.MoveMouse X: 667 Y: 373 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+# //税率は13%決め打ちの為、コメントアウトしておく
+DISABLE SET ColumnNum TO 16
+DISABLE MouseAndKeyboard.MoveMouse X: 1024 Y: 392 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+DISABLE MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+DISABLE MouseAndKeyboard.SendKeys.FocusAndSendKeysByInstanceOrHandle WindowInstance: App TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+# //19
+DISABLE SET ColumnNum TO 17
+DISABLE MouseAndKeyboard.MoveMouse X: 1103 Y: 391 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+DISABLE MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+DISABLE MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False

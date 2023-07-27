@@ -1,0 +1,27 @@
+SET ColumnNum TO 6
+IF ExcelData[LineNum][ColumnNum] <> $'''%''%''' THEN
+    SET ColumnNum TO 7
+    # //21
+    MouseAndKeyboard.MoveMouse X: 626 Y: 176 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+    MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+    MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+    # //処理が速すぎるとエラーになるので1秒待つ
+    WAIT 1
+    # //23
+    MouseAndKeyboard.MoveMouse X: 866 Y: 175 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+    MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+    # //処理が速すぎるとエラーになるので2秒待つ
+    WAIT 2
+    # //24
+    MouseAndKeyboard.MoveMouse X: 620 Y: 244 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+    MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+    # //処理が速すぎるとエラーになるので1秒待つ
+    WAIT 1
+    # //22
+    MouseAndKeyboard.MoveMouse X: 955 Y: 177 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+    MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+    # //処理が速すぎるとエラーになるので1秒待つ
+    WAIT 1
+ELSE
+    CALL Subflow_SearchAmountInfoByName
+END

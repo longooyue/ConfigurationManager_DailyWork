@@ -1,0 +1,23 @@
+SET ColumnNum TO 1
+MouseAndKeyboard.MoveMouse X: 282 Y: 229 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+WAIT 2
+MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: $'''{Delete}''' DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+WAIT 2
+MouseAndKeyboard.MoveMouse X: 282 Y: 252 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+DISABLE SET ColumnNum TO 2
+DISABLE MouseAndKeyboard.MoveMouse X: 298 Y: 253 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+DISABLE MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+DISABLE MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+DISABLE SET ColumnNum TO 3
+DISABLE MouseAndKeyboard.MoveMouse X: 307 Y: 277 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+DISABLE WAIT 1
+DISABLE MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+DISABLE MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
+DISABLE SET ColumnNum TO 4
+DISABLE MouseAndKeyboard.MoveMouse X: 277 Y: 299 RelativeTo: MouseAndKeyboard.PositionRelativeTo.Screen MovementStyle: MouseAndKeyboard.MovementStyle.Instant
+DISABLE WAIT 1
+DISABLE MouseAndKeyboard.SendMouseClick.Click ClickType: MouseAndKeyboard.MouseClickType.LeftClick MillisecondsDelay: 0
+DISABLE MouseAndKeyboard.SendKeys.FocusAndSendKeys TextToSend: ExcelData[LineNum][ColumnNum] DelayBetweenKeystrokes: 3 SendTextAsHardwareKeys: False
